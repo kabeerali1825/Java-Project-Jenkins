@@ -2,8 +2,9 @@ pipeline {
     agent any
 
     tools {
-        maven 'maven'
-        jdk 'java'
+         maven 'maven'
+         jdk 'java'
+         // You may need to configure FindBugs and PMD tools here if not already done in Jenkins global tool configuration
     }
 
     stages {
@@ -15,22 +16,26 @@ pipeline {
         
         stage('build') {
             steps {
-                echo 'Building the project...'
-                sh 'mvn clean install'
+               echo 'Building...'
+               sh 'mvn clean package' // Assuming Maven is used for building
             }
         }
-
-        stage('findbugs') {
+        
+        stage('analyze') {
             steps {
-                echo 'Running FindBugs...'
-                sh 'mvn findbugs:findbugs'
-            }
-        }
-
-        stage('pmd') {
-            steps {
-                echo 'Running PMD...'
-                sh 'mvn pmd:pmd'
+                script {
+                    // Run FindBugs analysis
+                    def findbugsHome = tool 'FindBugs'
+                    sh "${findbugsHome}/bin/findbugs -textui -outputFile findbugs-report.html target/*.jar"
+                    
+                    // Run PMD analysis
+                    def pmdHome = tool 'PMD'
+                    sh "${pmdHome}/bin/run.sh pmd -d src/main/java -f html -R rulesets/java/quickstart.xml -reportfile pmd-report.html"
+                }
+                
+                // Publish FindBugs and PMD reports
+                findBugs pattern: 'findbugs-report.html'
+                pmd canComputeNew: false, pattern: 'pmd-report.html'
             }
         }
     }
