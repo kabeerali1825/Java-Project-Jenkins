@@ -17,5 +17,21 @@ pipeline{
                echo 'success'
             }
         }
+        stage('Static Analysis') {
+            steps {
+                bat 'mvn pmd:pmd'
+                bat 'mvn findbugs:findbugs'
+            }
+        }
     }
+    post {
+          success {
+            echo 'The build was successful!'
+           
+        }
+        failure {
+            echo 'The build failed'
+            
+         }
+    }
 }
